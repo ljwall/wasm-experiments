@@ -11,12 +11,10 @@ var Module = {
 	},
 
 	readStr: (p) => {
-		const buffer = new Uint8Array(Module.buffer);
-
 		var str = '';
 
-		while (buffer[p] !== 0) {
-			str += String.fromCharCode(buffer[p++])
+		while (Module.HEAPU8[p] !== 0) {
+			str += String.fromCharCode(Module.HEAPU8[p++])
 		}
 
 		return str;
