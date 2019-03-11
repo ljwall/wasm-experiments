@@ -12,5 +12,7 @@ extern void context2d_moveTo(int i, float x, float y);
 extern void context2d_lineTo(int i, float x, float y);
 extern void context2d_stroke(int i);
 
+extern void test_cb(void (*cb)(int i));
+
 #endif
 
