@@ -56,9 +56,8 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	}
 
 	// Transform to use indexes of f as coordinates, also zoom to see only the latitue range [-65, 72.5]
-	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
-	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(90.0 - 72.5)/180.0);
-	context2d_setLineWidth(hContext, 0.5);
+	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
+	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(90.0 - 72.5)/180.0);
 
 	//marchingSquares(f,  100400);
 	for (i = ((int)min / 400) * 400; i < ((int)max / 400 + 1)*400; i += 400) {
