@@ -37,13 +37,14 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	f = (float *)&fetch->data[4];
 	min = max = f[0];
 
-	// Reshape data so the longitues go from -180 to +179.5 instead of 0 to 359.5
+	// Reshape data so the longitues go from -180 to +179.5 instead of 0 to 359.5 and latitues
+	// to go from +90 to -90 rather than -90 to +90
 	int half = N/2;
 	for (i = 0; i < M; i++) {
 		for (j = 0; j < half; j++) {
 			tmp = f[i*N + j];
-			f[i*N + j] = f[i*N + j + half];
-			f[i*N + j + half] = tmp;
+			f[i*N + j] = f[(M-1-i)*N + j + half];
+			f[(M-1-i)*N + j + half] = tmp;
 		}
 	}
 
@@ -53,7 +54,8 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	}
 
 	// Transform to use indexes of f as coordinates, also zoom to see only the latitue range [-65, 72.5]
-	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(180.0 - 137.5)/180.0);
+	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
+	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(90.0 - 72.5)/180.0);
 	context2d_setLineWidth(hContext, 0.5);
 
 	//marchingSquares(f,  100400);
