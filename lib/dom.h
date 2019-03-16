@@ -15,7 +15,5 @@ extern void context2d_setTransform(int i, float a, float b, float c, float d, fl
 extern void context2d_fillRect(int i, float x, float y, float width, float height);
 extern void context2d_setFillStyle(int i, char *style);
 
-extern void test_cb(void (*cb)(int i));
-
 #endif
 

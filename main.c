@@ -2,6 +2,7 @@
 #include <string.h>
 #include <emscripten/fetch.h>
 #include "lib/dom.h"
+#include "lib/marching_squares.h"
 
 #define HEIGHT 720
 #define WIDTH 1440
@@ -12,104 +13,6 @@
 #define ZOOM 1
 
 int hContext;
-
-void marchingSquares(float *f, float cutoff) {
-	float *a, *b, *c, *d;
-	unsigned char type;
-	unsigned char types[M * N];
-	int i, j, count = 0;
-
-	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
-
-	for (i = 0; i < M - 1; i++) {
-		a = &(f[i*N]);		c = &(a[1]);
-		b = &(f[(i+1)*N]);	d = &(b[1]);
-
-		for (j = 0; j < N; j++) {
-			type = 0;
-
-			if (j == N -1) {
-				// Wrap
-				c = &f[i*N];
-				d = &f[(i+1)*N];
-			}
-
-			if (*a >= cutoff) type  = 0b1000;
-			if (*b >= cutoff) type |= 0b0100;
-			if (*c >= cutoff) type |= 0b0010;
-			if (*d >= cutoff) type |= 0b0001;
-
-			types[i*N + j] = type;
-
-			if (0 < type && type < 0b1111) {
-				count++;
-			}
-
-			a++; b++; c++; d++;
-		}
-	}
-
-	unsigned char t;
-	context2d_beginPath(hContext);
-
-	for (i = 0; i < M - 1; i++) {
-		for (j = 0; j < N; j++) {
-			t = types[i*N + j];
-
-			if (0 < t && t < 0b1111) {
-				//context2d_fillRect(hContext, j, i, 1, 1);
-
-				switch (t) {
-					case 0b0001:
-					case 0b1110:
-						context2d_moveTo(hContext, j + 0.5, i + 1);
-						context2d_lineTo(hContext, j + 1, i + 0.5);
-						break;
-					case 0b0010:
-					case 0b1101:
-						context2d_moveTo(hContext, j + 0.5, i);
-						context2d_lineTo(hContext, j + 1, i + 0.5);
-						break;
-					case 0b0011:
-					case 0b1100:
-						context2d_moveTo(hContext, j + 0.5, i);
-						context2d_lineTo(hContext, j + 0.5, i + 1);
-						break;
-					case 0b0100:
-					case 0b1011:
-						context2d_moveTo(hContext, j, i + 0.5);
-						context2d_lineTo(hContext, j + 0.5, i + 1);
-						break;
-					case 0b0101:
-					case 0b1010:
-						context2d_moveTo(hContext, j, i + 0.5);
-						context2d_lineTo(hContext, j + 1, i + 0.5);
-						break;
-					case 0b0110:
-					case 0b1001:
-						context2d_moveTo(hContext, j, i + 0.5);
-						context2d_lineTo(hContext, j + 0.5, i + 1);
-						context2d_moveTo(hContext, j + 0.5, i);
-						context2d_lineTo(hContext, j + 1, i + 0.5);
-						break;
-					case 0b0111:
-					case 0b1000:
-						context2d_moveTo(hContext, j, i + 0.5);
-						context2d_lineTo(hContext, j + 0.5, i);
-						break;
-				}
-
-				if (--count == 0) {
-					// Break from both for loops
-					i = M - 1; break;
-				}
-			}
-		}
-	}
-
-	context2d_setLineWidth(hContext, 0.5);
-	context2d_stroke(hContext);
-}
 
 void downloadSucceeded(emscripten_fetch_t *fetch) {
 	printf("Finished downloading %llu bytes from URL %s.\n", fetch->numBytes, fetch->url);
@@ -149,13 +52,13 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 		if (f[i] > max) max = f[i];
 	}
 
-	printf("First MSLP: %f, min %f, max %f\n", f[0], min, max);
-
-	context2d_setFillStyle(hContext, "#2e2e2e");
+	// Transform to use indexes of f as coordinates, also zoom to see only the latitue range [-65, 72.5]
+	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(180.0 - 137.5)/180.0);
+	context2d_setLineWidth(hContext, 0.5);
 
 	//marchingSquares(f,  100400);
 	for (i = ((int)min / 400) * 400; i < ((int)max / 400 + 1)*400; i += 400) {
-		marchingSquares(f,  (float)i);
+		marchingSquares(f,  (float)i, M, N, hContext);
 	}
 
 	emscripten_fetch_close(fetch); // Free data associated with the fetch.
@@ -164,10 +67,6 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 void downloadFailed(emscripten_fetch_t *fetch) {
 	printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
 	emscripten_fetch_close(fetch); // Also free data on failure.
-}
-
-void cb (int i) {
-	printf("Got the number %d\n", i);
 }
 
 int main(void) {
@@ -182,6 +81,4 @@ int main(void) {
 	attr.onsuccess = &downloadSucceeded;
 	attr.onerror = &downloadFailed;
 	emscripten_fetch(&attr, "data/gfs.t00z.ieee.0p50.f000");
-
-	test_cb(&cb);
 }
