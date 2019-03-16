@@ -14,6 +14,7 @@ extern void context2d_stroke(int i);
 extern void context2d_setTransform(int i, float a, float b, float c, float d, float e, float f);
 extern void context2d_fillRect(int i, float x, float y, float width, float height);
 extern void context2d_setFillStyle(int i, char *style);
+extern unsigned long now(void);
 
 #endif
 

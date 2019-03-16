@@ -48,6 +48,8 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 		}
 	}
 
+	unsigned long t1 = now();
+
 	for (i = 1; i < length; i++) {
 		if (f[i] < min) min = f[i];
 		if (f[i] > max) max = f[i];
@@ -62,6 +64,10 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	for (i = ((int)min / 400) * 400; i < ((int)max / 400 + 1)*400; i += 400) {
 		marchingSquares(f,  (float)i, M, N, hContext);
 	}
+
+	unsigned long t2 = now();
+
+	printf("render time: %lu\n", (t2-t1));
 
 	emscripten_fetch_close(fetch); // Free data associated with the fetch.
 }
