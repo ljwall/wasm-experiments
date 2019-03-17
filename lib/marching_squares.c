@@ -1,7 +1,24 @@
-#include <stdio.h>
+#include <math.h>
+
 #include "./dom.h"
 
 typedef enum {UP, DOWN, LEFT, RIGHT, INIT} direction;
+
+void applyMercator(line_operation *ops, int count, int m, int n, float north, float south, int width, int height) {
+	float x_scale = ((float)width)/n,
+		  pi_by_180 = M_PI / 180,
+		  tan_north = tanf(north * pi_by_180),
+		  tan_south = tanf(south * pi_by_180),
+		  y_scale = ((float)height)/(tan_north - tan_south),
+		  lat_resoltion = (north - south)/(m - 1);
+
+	while (count--) {
+		ops->x *= x_scale;
+		ops->y = y_scale*(tan_north - tanf(pi_by_180*(north - ops->y*lat_resoltion)));
+
+		ops++;
+	}
+}
 
 void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 	float *a, *b, *c, *d;
@@ -11,8 +28,6 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 	line_operation ops[m * n];
 	direction dir;
 	int i, j, p, q, count = 0;
-
-	unsigned long t1 = now();
 
 	context2d_beginPath(hContext);
 
@@ -66,20 +81,16 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 							if (dir == INIT) {
 								t = (cutoff - *c)/(*d - *c);
 								ops[count++] = (line_operation) {MOVE_TO, q + 1, p + t};
-								//context2d_moveTo(hContext, q + 1, p + t);
-
 							}
 
 							t = (cutoff - *b)/(*d - *b);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p + 1};
-							//context2d_lineTo(hContext, q + t, p + 1);
 
 							dir = DOWN;
 							p++;
 						} else if (dir == UP) {
 							t = (cutoff - *c)/(*d - *c);
 							ops[count++] = (line_operation) {LINE_TO, q + 1, p + t};
-							//context2d_lineTo(hContext, q + 1, p + t);
 							dir = RIGHT;
 							q++;
 						}
@@ -98,13 +109,11 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 
 							t = (cutoff - *c)/(*d - *c);
 							ops[count++] = (line_operation) {LINE_TO, q + 1, p + t};
-							//context2d_lineTo(hContext, q + 1, p + t);
 							dir = RIGHT;
 							q++;
 						} else if (dir == LEFT) {
 							t = (cutoff - *a)/(*c - *a);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p};
-							//context2d_lineTo(hContext, q + t, p);
 							dir = UP;
 							p--;
 						}
@@ -118,17 +127,14 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 							if (dir == INIT) {
 								t = (cutoff - *a)/(*c - *a);
 								ops[count++] = (line_operation) {MOVE_TO, q + t, p};
-								//context2d_moveTo(hContext, q + t, p);
 							}
 
 							t = (cutoff - *b)/(*d - *b);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p + 1};
-							//context2d_lineTo(hContext, q + t, p + 1);
 							p++;
 						} else if (dir == UP) {
 							t = (cutoff - *a)/(*c - *a);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p};
-							//context2d_lineTo(hContext, q + t, p);
 							p--;
 						}
 
@@ -141,18 +147,15 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 							if (dir == INIT) {
 								t = (cutoff - *a)/(*b - *a);
 								ops[count++] = (line_operation) {MOVE_TO, q, p + t};
-								//context2d_moveTo(hContext, q, p + t);
 							}
 
 							t = (cutoff - *b)/(*d - *b);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p + 1};
-							//context2d_lineTo(hContext, q + t, p + 1);
 							dir = DOWN;
 							p++;
 						} else if (dir == UP) {
 							t = (cutoff - *a)/(*b - *a);
 							ops[count++] = (line_operation) {LINE_TO, q, p + t};
-							//context2d_lineTo(hContext, q, p + t);
 						}
 						break;
 					case 0b0101:
@@ -163,17 +166,14 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 							if (dir == INIT) {
 								t = (cutoff - *a)/(*b - *a);
 								ops[count++] = (line_operation) {MOVE_TO, q, p + t};
-								//context2d_moveTo(hContext, q, p + t);
 							}
 
 							t = (cutoff - *c)/(*d - *c);
 							ops[count++] = (line_operation) {LINE_TO, q + 1, p + t};
-							//context2d_lineTo(hContext, q + 1, p + t);
 							q++;
 						} else if (dir == LEFT) {
 							t = (cutoff - *a)/(*b - *a);
 							ops[count++] = (line_operation) {LINE_TO, q, p + t};
-							//context2d_lineTo(hContext, q, p + t);
 							q--;
 						}
 						break;
@@ -184,33 +184,28 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 							if (dir == INIT) {
 								t = (cutoff - *a)/(*b - *a);
 								ops[count++] = (line_operation) {MOVE_TO, q, p + t};
-								//context2d_moveTo(hContext, q, p + t);
 							}
 
 							t = (cutoff - *b)/(*d - *b);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p + 1};
-							//context2d_lineTo(hContext, q + t, p + 1);
 							dir = DOWN;
 							p++;
 						} else if (dir == UP) {
 							types[p][q] = 0b0010;
 							t = (cutoff - *a)/(*b - *a);
 							ops[count++] = (line_operation) {LINE_TO, q, p + t};
-							//context2d_lineTo(hContext, q, p + t);
 							dir = LEFT;
 							q--;
 						} else if (dir == LEFT) {
 							types[p][q] = 0b0100;
 							t = (cutoff - *a)/(*c - *a);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p};
-							//context2d_lineTo(hContext, q + t, p);
 							dir = UP;
 							p--;
 						} else if (dir == DOWN) {
 							types[p][q] = 0b0100;
 							t = (cutoff - *c)/(*d - *c);
 							ops[count++] = (line_operation) {LINE_TO, q + 1, p + t};
-							//context2d_lineTo(hContext, q + 1, p + t);
 							dir = RIGHT;
 							q++;
 						}
@@ -224,18 +219,15 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 							if (dir == INIT) {
 								t = (cutoff - *a)/(*b - *a);
 								ops[count++] = (line_operation) {MOVE_TO, q, p + t};
-								//context2d_moveTo(hContext, q, p + t);
 							}
 
 							t = (cutoff - *a)/(*c - *a);
 							ops[count++] = (line_operation) {LINE_TO, q + t, p};
-							//context2d_lineTo(hContext, q + t, p);
 							dir = UP;
 							p--;
 						} else if (dir == DOWN) {
 							t = (cutoff - *a)/(*b - *a);
 							ops[count++] = (line_operation) {LINE_TO, q, p + t};
-							//context2d_lineTo(hContext, q, p + t);
 							dir = LEFT;
 							q--;
 						}
@@ -245,12 +237,10 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 
 		}
 	}
-	unsigned long t2 = now();
-	context2d_lineOperations(hContext, ops, count);
-	unsigned long t3 = now();
-	context2d_setLineWidth(hContext, 0.5);
-	context2d_stroke(hContext);
-	unsigned long t4 = now();
 
-	printf("cutoff %f, count %d ,calculating %lu, calling line %lu, rendering %lu\n", cutoff, count, t2 - t1, t3 - t2, t4 - t3);
+	applyMercator(ops, count, m, n, 72.5, -65.0, 1440, 771);
+	context2d_lineOperations(hContext, ops, count);
+	context2d_setLineWidth(hContext, 1);
+	context2d_setStrokeStyle(hContext, "#2e2e2e");
+	context2d_stroke(hContext);
 }

@@ -7,7 +7,7 @@
 	</head>
 	<body>
 		<h3 id="pagetitle" data-title>Contours test</h3>
-		<canvas id="chart" width="1440" height="720"></canvas>
+		<canvas id="chart" width="1440" height="771"></canvas>
 		{{{ SCRIPT }}}
 	</body>
 </html>

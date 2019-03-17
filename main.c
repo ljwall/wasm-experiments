@@ -4,7 +4,7 @@
 #include "lib/dom.h"
 #include "lib/marching_squares.h"
 
-#define HEIGHT 720
+#define HEIGHT 771
 #define WIDTH 1440
 
 #define M 361
@@ -56,12 +56,14 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	}
 
 	// Transform to use indexes of f as coordinates, also zoom to see only the latitue range [-65, 72.5]
-	context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
+	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
 	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(90.0 - 72.5)/180.0);
 
-	//marchingSquares(f,  100400);
+	// Advance f to 72.5 deg latitude
+	f += 35 * N;
+
 	for (i = ((int)min / 400) * 400; i < ((int)max / 400 + 1)*400; i += 400) {
-		marchingSquares(f,  (float)i, M, N, hContext);
+		marchingSquares(f,  (float)i, 276, N, hContext);
 	}
 
 	unsigned long t2 = now();
@@ -78,8 +80,6 @@ void downloadFailed(emscripten_fetch_t *fetch) {
 
 int main(void) {
 	hContext = canvas_getContext2d(getElementById("chart"));
-
-	context2d_setStrokeStyle(hContext, "#1e1e1e");
 
 	emscripten_fetch_attr_t attr;
 	emscripten_fetch_attr_init(&attr);
