@@ -78,8 +78,13 @@ void downloadFailed(emscripten_fetch_t *fetch) {
 	emscripten_fetch_close(fetch); // Also free data on failure.
 }
 
-int main(void) {
+void onImage(int im) {
 	hContext = canvas_getContext2d(getElementById("chart"));
+
+	context2d_drawImage(hContext, im, 0, 0, WIDTH, HEIGHT);
+	// Add transparent cnavas to lighten map..
+	context2d_setFillStyle(hContext, "#ffffffaa");
+	context2d_fillRect(hContext, 0, 0, WIDTH, HEIGHT);
 
 	emscripten_fetch_attr_t attr;
 	emscripten_fetch_attr_init(&attr);
@@ -88,4 +93,8 @@ int main(void) {
 	attr.onsuccess = &downloadSucceeded;
 	attr.onerror = &downloadFailed;
 	emscripten_fetch(&attr, "data/gfs.t00z.ieee.0p50.f000");
+}
+
+int main(void) {
+	loadImage("data/nww3Swell-940-M1440p-88.gif", &onImage);
 }

@@ -22,6 +22,7 @@ var Module = {
 
 	__dom_js: {
 		elements: [null],
+		images: [null],
 		context2d: [null]
 	},
 };

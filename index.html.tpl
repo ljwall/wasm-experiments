@@ -3,10 +3,9 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>WebAssembly</title>
+		<title>WebAssembly Contour Mat Test</title>
 	</head>
 	<body>
-		<h3 id="pagetitle" data-title>Contours test</h3>
 		<canvas id="chart" width="1440" height="771"></canvas>
 		{{{ SCRIPT }}}
 	</body>
