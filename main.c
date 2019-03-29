@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <emscripten/emscripten.h>
 #include <emscripten/fetch.h>
 #include "lib/dom.h"
 #include "lib/marching_squares.h"
@@ -10,9 +12,15 @@
 #define M 361
 #define N 720
 
-#define ZOOM 1
+int hImage;
 
-int hContext;
+extern void initalized(void);
+
+typedef struct {
+	int h_canvas;
+	int h_context;
+	void (*done)(int);
+} user_data;
 
 void downloadSucceeded(emscripten_fetch_t *fetch) {
 	printf("Finished downloading %llu bytes from URL %s.\n", fetch->numBytes, fetch->url);
@@ -59,28 +67,36 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	f += 35 * N;
 
 	for (i = ((int)min / 400) * 400; i < ((int)max / 400 + 1)*400; i += 400) {
-		marchingSquares(f,  (float)i, 276, N, hContext);
+		marchingSquares(f,  (float)i, 276, N, ((user_data*)fetch->userData)->h_context);
 	}
+
+	(*(((user_data*)fetch->userData)->done))(((user_data*)fetch->userData)->h_canvas);
 
 	unsigned long t2 = now();
 
 	printf("render time: %lu\n", (t2-t1));
 
+	free(fetch->userData);
 	emscripten_fetch_close(fetch); // Free data associated with the fetch.
 }
 
 void downloadFailed(emscripten_fetch_t *fetch) {
 	printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
+	free(fetch->userData);
 	emscripten_fetch_close(fetch); // Also free data on failure.
 }
 
-void onImage(int im) {
-	hContext = canvas_getContext2d(getElementById("chart"));
+void EMSCRIPTEN_KEEPALIVE draw(char* datafile, int h_canvas, void (*done)(int)) {
+	int h_context = canvas_getContext2d(h_canvas);
+	// fill space white
+	context2d_setFillStyle(h_context, "#ffffff");
+	context2d_fillRect(h_context, 0, 0, WIDTH, HEIGHT);
 
-	context2d_drawImage(hContext, im, 0, 0, WIDTH, HEIGHT);
-	// Add transparent cnavas to lighten map..
-	context2d_setFillStyle(hContext, "#ffffffaa");
-	context2d_fillRect(hContext, 0, 0, WIDTH, HEIGHT);
+	context2d_drawImage(h_context, hImage, 0, 0, WIDTH, HEIGHT);
+
+	// Add transparent cavas to lighten map..
+	context2d_setFillStyle(h_context, "#ffffffaa");
+	context2d_fillRect(h_context, 0, 0, WIDTH, HEIGHT);
 
 	emscripten_fetch_attr_t attr;
 	emscripten_fetch_attr_init(&attr);
@@ -88,7 +104,18 @@ void onImage(int im) {
 	attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
 	attr.onsuccess = &downloadSucceeded;
 	attr.onerror = &downloadFailed;
-	emscripten_fetch(&attr, "data/gfs.t00z.ieee.0p50.f000");
+
+	attr.userData = malloc(sizeof(user_data));
+	((user_data*)attr.userData)->h_canvas = h_canvas;
+	((user_data*)attr.userData)->h_context = h_context;
+	((user_data*)attr.userData)->done = done;
+
+	emscripten_fetch(&attr, datafile);
+}
+
+void onImage(int im) {
+	hImage = im;
+	initalized();
 }
 
 int main(void) {

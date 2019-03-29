@@ -20,6 +20,14 @@ var Module = {
 		return str;
 	},
 
+	addElement: (el) => {
+		return Module.__dom_js.elements.push(el) - 1;
+	},
+
+	getElement: (h) => {
+		return Module.__dom_js.elements[h];
+	},
+
 	__dom_js: {
 		elements: [null],
 		images: [null],
