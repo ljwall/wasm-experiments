@@ -67,7 +67,7 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 	f += 35 * N;
 
 	for (i = ((int)min / 400) * 400; i < ((int)max / 400 + 1)*400; i += 400) {
-		marchingSquares(f,  (float)i, 276, N, ((user_data*)fetch->userData)->h_context);
+		marchingSquares(f, (float)i, 276, N, ((user_data*)fetch->userData)->h_context);
 	}
 
 	(*(((user_data*)fetch->userData)->done))(((user_data*)fetch->userData)->h_canvas);
