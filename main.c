@@ -55,10 +55,6 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 		if (f[i] > max) max = f[i];
 	}
 
-	// Transform to use indexes of f as coordinates, also zoom to see only the latitue range [-65, 72.5]
-	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT + 0.0) / M, 0, 0);
-	//context2d_setTransform(hContext, ZOOM*(WIDTH + 0.0)/ N, 0, 0, ZOOM*(HEIGHT*(180.0/137.5)) / M, 0, -HEIGHT*(90.0 - 72.5)/180.0);
-
 	// Advance f to 72.5 deg latitude
 	f += 35 * N;
 

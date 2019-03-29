@@ -6,15 +6,15 @@ typedef enum {UP, DOWN, LEFT, RIGHT, INIT} direction;
 
 void applyMercator(line_operation *ops, int count, int m, int n, float north, float south, int width, int height) {
 	float x_scale = ((float)width)/n,
-		  pi_by_180 = M_PI / 180,
-		  tan_north = tanf(north * pi_by_180),
-		  tan_south = tanf(south * pi_by_180),
+		  pi_by_360 = M_PI / 360,
+		  tan_north = logf(tanf(M_PI_4 + north * pi_by_360)),
+		  tan_south = logf(tanf(M_PI_4 + south * pi_by_360)),
 		  y_scale = ((float)height)/(tan_north - tan_south),
 		  lat_resoltion = (north - south)/(m - 1);
 
 	while (count--) {
 		ops->x *= x_scale;
-		ops->y = y_scale*(tan_north - tanf(pi_by_180*(north - ops->y*lat_resoltion)));
+		ops->y = y_scale*(tan_north - logf(tanf(M_PI_4 + pi_by_360*(north - ops->y*lat_resoltion))));
 
 		ops++;
 	}
@@ -239,6 +239,7 @@ void marchingSquares(float *f, float cutoff, int m, int n, int hContext) {
 	}
 
 	applyMercator(ops, count, m, n, 72.5, -65.0, 1440, 771);
+
 	context2d_lineOperations(hContext, ops, count);
 	context2d_setLineWidth(hContext, 1);
 	context2d_setStrokeStyle(hContext, "#2e2e2e");
